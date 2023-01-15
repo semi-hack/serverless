@@ -11,6 +11,7 @@ import (
 )
 
 var ErrorMethodNotAllowed = "Method Not Allowed"
+var ErrorMethodNotAcceptable = "Method Not Acceptable"
 
 type ErrorBody struct{
 	ErrorMsg *string `json:"error,omitempty`
@@ -38,12 +39,18 @@ func GetUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dyn
 
 func CreateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(
 	*events.APIGatewayProxyResponse, error){
-
+		if req.Headers["content-type"] != "application/json" && req.Headers["Content-Type"] != "application/json" {
+			return apiResponse(http.StatusNotAcceptable, ErrorMethodNotAcceptable)
+		}
+		result, err := user.CreateUser()
+		if err != nil {
+			return apiResponse(http.StatusBadRequest, ErrorBody{aws.String(err.Error())})
+		}
+		return apiResponse(http.StatusOK, result)
 }
 
 func UpdateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(
-	*events.APIGatewayProxyResponse, error
-){
+	*events.APIGatewayProxyResponse, error){
 
 }
 

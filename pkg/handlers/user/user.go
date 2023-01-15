@@ -1,17 +1,17 @@
 package user
 
 import (
-	"encoding/json"
 	"errors"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
 var (
 	ErrorFailedToFetchRecord = "failed to fetch record"
+	ErrorFailedToUnMarshallRecord = "failed to UnMarshall record"
 )
 
 type User struct {
@@ -26,22 +26,45 @@ func Fetchuser(email, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*U
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"email":{
-				S: aws.String(email)
-			}
+				S: aws.String(email),
+			},
 		},
 		TableName: aws.String(tableName),
 	}
 
 	result, err := dynaClient.GetItem(input)
 	if err != nil {
-		 return nil, errors.New(ErrorFailedToFetchRecord)
+		return nil, errors.New(ErrorFailedToFetchRecord)
 	}
+
+	item := new(User)
+	err = dynamodbattribute.UnmarshalMap(result.Item, item)
+	if err != nil {
+		return nil, errors.New(ErrorFailedToUnMarshallRecord)
+	}
+	return item, nil
 }
 
-func FetchUsers() {
+func FetchUsers(tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*[]User, error) {
+	input := &dynamodb.ScanInput{
+		TableName: aws.String(tableName),
+	}
+
+	result, err := dynaClient.Scan(input)
+	if err != nil {
+		return nil, errors.New(ErrorFailedToFetchRecord)
+	}
+
+	item := new([]User)
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, item)
+	if err != nil {
+		return nil, errors.New(ErrorFailedToUnMarshallRecord)
+	}
+	return item, nil
 
 }
 
-func CreateUser() {
-
+func CreateUser(data User, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*User, error) {
+	var u User
+	return &u, nil
 }
