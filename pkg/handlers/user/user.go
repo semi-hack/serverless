@@ -1,8 +1,11 @@
 package user
 
 import (
+	"encoding/json"
 	"errors"
+	"src/go-serverless/pkg/validators"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -12,6 +15,8 @@ import (
 var (
 	ErrorFailedToFetchRecord = "failed to fetch record"
 	ErrorFailedToUnMarshallRecord = "failed to UnMarshall record"
+	ErrorInvalidEmail = "Invalid Email"
+	ErrorCouldNotDynamoPutItem = "could not dynamo put item"
 )
 
 type User struct {
@@ -64,7 +69,41 @@ func FetchUsers(tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*[]User,
 
 }
 
-func CreateUser(data User, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*User, error) {
+func CreateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*User, error) {
+	var u User
+
+	err := json.Unmarshal([]byte(req.Body), &u); 
+	if err != nil {
+		return nil,  errors.New(ErrorFailedToUnMarshallRecord )
+	}
+
+	if !validators.IsEmailValid(u.Email){
+		return nil, errors.New(ErrorInvalidEmail)
+	}
+
+	//check if user exists
+	
+	// add item 
+	av, err := dynamodbattribute.MarshalMap(U)
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(tableName),
+		Item: av,
+	}
+
+	_, err = dynaClient.PutItem(input)
+	if err != nil {
+		return nil, errors.New(ErrorCouldNotDynamoPutItem)
+	}
+	return &u, nil
+}
+
+
+func UpdateUser(req events.APIGatewayProxyRequest,, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*User, error) {
+	var u User
+	return &u, nil
+}
+
+func DeleteUser(req events.APIGatewayProxyRequest,, tableName string, dynaClient dynamodbiface.DynamoDBAPI) error {
 	var u User
 	return &u, nil
 }
