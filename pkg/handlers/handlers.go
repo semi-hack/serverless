@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
@@ -15,7 +14,7 @@ var ErrorMethodNotAllowed = "Method Not Allowed"
 var ErrorMethodNotAcceptable = "Method Not Acceptable"
 
 type ErrorBody struct{
-	ErrorMsg *string `json:"error,omitempty`
+	ErrorMsg *string `json:"error,omitempty"`
 }
 
 
@@ -45,7 +44,7 @@ func CreateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient 
 		if req.Headers["content-type"] != "application/json" && req.Headers["Content-Type"] != "application/json" {
 			return apiResponse(http.StatusNotAcceptable, ErrorMethodNotAcceptable)
 		}
-		result, err := user.CreateUser(tableName, dynaClient)
+		result, err := user.CreateUser(req, tableName, dynaClient)
 		if err != nil {
 			return apiResponse(http.StatusBadRequest, ErrorBody{aws.String(err.Error())})
 		}

@@ -21,6 +21,7 @@ var (
 	ErrorUserAreadyExists = "This user already exists"
 	ErrorCouldNotMarshallItem = "could not marshall item"
 	ErrorUserDoesNotExist = "User does not exist"
+	ErrorCouldNotDeleteItem = "Could not delete item"
 )
 
 //user struct
@@ -141,13 +142,26 @@ func UpdateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient 
 		return nil, errors.New(ErrorCouldNotDynamoPutItem)
 	}
 	return &u, nil
-
-	return &u, nil
 }
 
-func DeleteUser(req events.APIGatewayProxyRequest,, tableName string, dynaClient dynamodbiface.DynamoDBAPI) error {
-	var u User
-	return &u, nil
+func DeleteUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI) error {
+
+	email := req.QueryStringParameters["email"]
+	input := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"email":{
+				S: aws.String(email),
+			},
+		},
+		TableName: aws.String(tableName),
+	}
+
+	_, err := dynaClient.DeleteItem(input)
+
+	if err != nil {
+		return errors.New(ErrorCouldNotDeleteItem)
+	}
+	return nil 
 }
 
 func HashPassword(password string) (string, error) {
@@ -156,6 +170,6 @@ func HashPassword(password string) (string, error) {
 }
 
 func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }

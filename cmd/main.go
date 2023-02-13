@@ -11,9 +11,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-func init() {
-
-}
+var(
+	dynaClient dynamodbiface.DynamoDBAPI
+)
 
 func main(){
 	region := os.Getenv("AWS_REGION")
@@ -24,7 +24,7 @@ func main(){
 		return
 	}
 
-	dynaClient :=  dynamodb.New(awsSession)
+	dynaClient =  dynamodb.New(awsSession)
 	lambda.Start(handler)
 }
 
@@ -40,7 +40,7 @@ func handler(req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse
 			return handlers.UpdateUser(req, tableName, dynaClient)
 		case "DELETE":
 			return handlers.DeleteUser(req, tableName, dynaClient)
-		}
 	    default:
 			return handlers.UnhandleMethod()
+		}
 }
